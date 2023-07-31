@@ -5,7 +5,11 @@
         <el-button style="margin: 0 auto" type="primary" @click="handleAdd"
           >新增</el-button
         >
-        <el-menu></el-menu>
+        <el-menu @select="handleMenuSelect">
+          <el-menu-item v-for="el in lotteryList" :index="el.id">{{
+            el.name
+          }}</el-menu-item>
+        </el-menu>
       </el-scrollbar>
     </div>
     <div class="main-content"></div>
@@ -20,15 +24,25 @@ import LotteryForm from "../components/LotteryForm.vue";
 import { getDB } from "../db";
 import LotteryService from "../service/LotteryService";
 import { serviceInjectionKey } from "../hook/useService";
+import { ILottery, ILotteryOption } from "../model/lottery";
 
 const lotteryService = new LotteryService();
-
-provide(serviceInjectionKey, { lotteryService });
-
+const services = { lotteryService };
+provide(serviceInjectionKey, services);
+const lotteryList = ref<ILottery[]>([]);
+const currentOptions = ref<ILotteryOption[]>([]);
 const formVisible = ref(false);
 const handleAdd = () => {
   formVisible.value = true;
 };
+const handleMenuSelect = async (val: any) => {
+  const detail = await services.lotteryService.getLotteryDetail(val);
+  currentOptions.value = detail.options;
+};
+const onInit = async () => {
+  lotteryList.value = await services.lotteryService.getLotteryList();
+};
+onInit();
 </script>
 
 <style lang="less">

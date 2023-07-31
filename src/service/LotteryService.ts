@@ -2,6 +2,7 @@ import { ElMessage } from "element-plus";
 import {
   ILottery,
   ILotteryAddReqDTO,
+  ILotteryDetailResDTO,
   ILotteryOption,
   ILotteryOptionAddReqDTO,
 } from "../model/lottery";
@@ -108,5 +109,15 @@ export default class LotteryService {
     };
     this.lotteryOptions.push(option);
     return Promise.resolve(option);
+  }
+
+  getLotteryDetail(id: string): Promise<ILotteryDetailResDTO> {
+    const item = this.lotteries.find((el) => el.id === id);
+    if (!item) return Promise.reject(new Error("数据不存在"));
+    const options = this.lotteryOptions.filter((el) => el.lotteryId === id);
+    return Promise.resolve({
+      ...item,
+      options,
+    });
   }
 }
