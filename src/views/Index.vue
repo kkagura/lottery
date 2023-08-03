@@ -12,35 +12,73 @@
         </el-menu>
       </el-scrollbar>
     </div>
-    <div class="main-content"></div>
-    <LotteryForm v-model="formVisible"></LotteryForm>
+    <div class="main-content">
+      <div class="lottery-options">
+        <el-tag v-for="el in currentOptions">{{ el.name }}</el-tag>
+        <el-button
+          :disabled="!currentLotteryId"
+          type="primary"
+          text
+          @click="handleAddOption"
+        >
+          <el-icon><Plus></Plus></el-icon>
+        </el-button>
+      </div>
+      <Roulette ref="rouletteRef" :options="currentOptions"></Roulette>
+    </div>
+    <LotteryForm @success="getLotteryList" v-model="formVisible"></LotteryForm>
+    <OptionForm
+      v-model="optionFormVisible"
+      :lottery-id="currentLotteryId"
+      @success="handleRefreshOptions"
+    ></OptionForm>
   </div>
 </template>
 
 <script setup lang="ts">
-import { provide, ref } from "vue";
-import { ElScrollbar, ElMenu } from "element-plus";
+import { nextTick, provide, ref } from "vue";
+import { ElScrollbar, ElMenu, ElTag, ElIcon } from "element-plus";
 import LotteryForm from "../components/LotteryForm.vue";
 import { getDB } from "../db";
 import LotteryService from "../service/LotteryService";
 import { serviceInjectionKey } from "../hook/useService";
 import { ILottery, ILotteryOption } from "../model/lottery";
+import { Plus } from "@element-plus/icons-vue";
+import OptionForm from "../components/OptionForm.vue";
+import Roulette from "../components/Roulette.vue";
 
+const rouletteRef = ref();
 const lotteryService = new LotteryService();
 const services = { lotteryService };
 provide(serviceInjectionKey, services);
 const lotteryList = ref<ILottery[]>([]);
 const currentOptions = ref<ILotteryOption[]>([]);
+const currentLotteryId = ref("");
 const formVisible = ref(false);
 const handleAdd = () => {
   formVisible.value = true;
 };
+const optionFormVisible = ref(false);
+const handleAddOption = () => {
+  optionFormVisible.value = true;
+};
 const handleMenuSelect = async (val: any) => {
   const detail = await services.lotteryService.getLotteryDetail(val);
+  currentLotteryId.value = val;
   currentOptions.value = detail.options;
+  await nextTick();
+  rouletteRef.value.paint();
 };
-const onInit = async () => {
+const handleRefreshOptions = () => {
+  handleMenuSelect(currentLotteryId.value);
+};
+
+const getLotteryList = async () => {
   lotteryList.value = await services.lotteryService.getLotteryList();
+};
+
+const onInit = async () => {
+  getLotteryList();
 };
 onInit();
 </script>
@@ -60,6 +98,15 @@ onInit();
   .main-content {
     flex: 1;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    .lottery-options {
+      padding: 8px;
+      .el-tag {
+        margin-right: 4px;
+      }
+      border-bottom: 1px solid #eee;
+    }
   }
 }
 </style>

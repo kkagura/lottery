@@ -1,9 +1,17 @@
 <template>
   <el-dialog @open="onOpen" @close="onClose" v-model="visible" :title="''">
-    <el-form ref="formRef" :model="formData" :rules="rules">
-      <el-form-item prop="name" label="分组名称">
+    <el-form label-width="100px" ref="formRef" :model="formData" :rules="rules">
+      <el-form-item prop="name" label="选项名称">
         <el-input
           v-model="formData.name"
+          :maxlength="20"
+          clearable
+          placeholder="请输入"
+        ></el-input>
+      </el-form-item>
+      <el-form-item prop="weight" label="权重">
+        <el-input
+          v-model="formData.weight"
           :maxlength="20"
           clearable
           placeholder="请输入"
@@ -25,6 +33,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  lotteryId: {
+    type: String,
+    required: true,
+  },
 });
 const emit = defineEmits(["update:modelValue", "success"]);
 const visible = computed({
@@ -35,11 +47,16 @@ const visible = computed({
 const formRef = ref();
 const formData = reactive({
   name: "",
+  weight: 1,
 });
 const rules = {
   name: {
     required: true,
-    message: "请输入分组名称",
+    message: "请输入选项名称",
+  },
+  weight: {
+    required: true,
+    message: "请输入选项权重",
   },
 };
 const onOpen = async () => {};
@@ -49,9 +66,11 @@ const onClose = () => {
 const service = useService();
 const handleConfirm = async () => {
   await formRef.value.validate();
-  await service.lotteryService.addLottery(formData);
+  await service.lotteryService.addLotteryOption({
+    ...formData,
+    lotteryId: props.lotteryId,
+  });
   emit("success");
   visible.value = false;
 };
 </script>
-<style lang="less" scoped></style>
