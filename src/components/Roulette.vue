@@ -9,6 +9,7 @@
 import { PropType, onMounted, ref } from "vue";
 import { ILotteryOption } from "../model/lottery";
 import { RandomColor } from "../utils/color";
+import { Animator } from "../animate";
 const props = defineProps({
   options: {
     type: Array as PropType<ILotteryOption[]>,
@@ -35,23 +36,50 @@ const initSize = () => {
   bottomCanvas.style.height = height + "px";
 };
 
-let currentPoint = 0;
+let currentAngle = 0;
 // let
 const paintPointer = () => {
   const container = containerRef.value!;
   const { width, height } = container.getBoundingClientRect();
   const canvas = topCanvasRef.value!;
   const ctx = canvas.getContext("2d")!;
+  const l = Math.round(Math.min(width, height) * 0.4) * 0.8;
+  const w = l * 0.1;
 
-  ctx.clearRect(0, 0, width, height);
   ctx.save();
   ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, width, height);
+  ctx.translate(width / 2, height / 2);
+  ctx.rotate(currentAngle);
+  ctx.beginPath();
+  ctx.shadowBlur = 40;
+  ctx.shadowColor = "rgba(0,0,0,0.4)";
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0 - w, 0 - l * 0.4);
+  ctx.lineTo(0, 0 - l);
+  ctx.lineTo(0 + w, 0 - l * 0.4);
+  ctx.lineTo(0, 0);
+  ctx.fill();
   ctx.restore();
+};
+
+const startRotate = () => {
+  const animator = new Animator(
+    currentAngle,
+    currentAngle + 15 + 50 * Math.PI * Math.random(),
+    5
+  );
+  animator.onProgress((val) => {
+    console.log(val);
+    currentAngle = val;
+    paintPointer();
+  });
+  animator.run();
 };
 
 const paint = () => {
   const container = containerRef.value!;
-  const canvas = topCanvasRef.value!;
+  const canvas = bottomCanvasRef.value!;
   const { width, height } = container.getBoundingClientRect();
   const r = Math.round(Math.min(width, height) * 0.4);
   const options = props.options;
@@ -60,10 +88,10 @@ const paint = () => {
   const colors = new RandomColor(props.options.length).rgbArray;
 
   const ctx = canvas.getContext("2d")!;
-  ctx.clearRect(0, 0, width, height);
   let lastAngel = 0;
   ctx.save();
   ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, width, height);
   ctx.translate(width / 2, height / 2);
   for (let i = 0; i < props.options.length; i++) {
     const op = props.options[i];
@@ -71,6 +99,9 @@ const paint = () => {
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.rotate(lastAngel);
+    ctx.fillStyle = "blue";
+    ctx.font = "16px we";
+    ctx.fillText(op.name, 0, -r);
     lastAngel = angle;
     ctx.arc(0, 0, r, -Math.PI / 2, -Math.PI / 2 + angle);
     ctx.closePath();
@@ -78,13 +109,14 @@ const paint = () => {
     ctx.fill();
   }
   ctx.restore();
+  paintPointer();
 };
 
 onMounted(() => {
   initSize();
 });
 
-defineExpose({ paint });
+defineExpose({ paint, startRotate });
 </script>
 
 <style lang="less" scope>

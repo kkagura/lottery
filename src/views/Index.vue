@@ -23,6 +23,7 @@
         >
           <el-icon><Plus></Plus></el-icon>
         </el-button>
+        <el-button type="primary" @click="handleStart">开始</el-button>
       </div>
       <Roulette ref="rouletteRef" :options="currentOptions"></Roulette>
     </div>
@@ -75,6 +76,10 @@ const handleRefreshOptions = () => {
 
 const getLotteryList = async () => {
   lotteryList.value = await services.lotteryService.getLotteryList();
+};
+
+const handleStart = () => {
+  rouletteRef.value.startRotate();
 };
 
 const onInit = async () => {
